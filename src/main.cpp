@@ -1,18 +1,27 @@
-#include <Arduino.h>
+#include <SPI.h>
+#include <SD.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7735.h>
+#include "Config.h"
 
-// put function declarations here:
-int myFunction(int, int);
+Adafruit_ST7735 tft(TFT_CS, TFT_DC, TFT_RST);
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(SERIAL_BAUD);
+  
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH);
+
+  // ніціалізація Дисплея
+  tft.initR(DISPLAY_INITR_TAB);
+  tft.setRotation(DISPLAY_ROTATION);
+  tft.fillScreen(ST77XX_BLACK);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(1);
+  tft.setCursor(10, 10);
+  tft.println("test");
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
 }
