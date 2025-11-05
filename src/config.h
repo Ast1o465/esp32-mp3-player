@@ -1,3 +1,8 @@
+#include <SPI.h>
+#include <SD.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7735.h>
+
 #ifndef CONFIG_H
 #define CONFIG_H
 
