@@ -30,6 +30,11 @@
 #define JOY_DEBOUNCE_MS 140
 #define JOY_SELECT_DEBOUNCE_MS 220
 
+// Audio I2S (PCM5102A)
+#define I2S_BCLK_PIN 22
+#define I2S_LRCK_PIN 21
+#define I2S_DOUT_PIN 17
+
 // Display rotation 0..3
 #define DISPLAY_ROTATION 0
 
