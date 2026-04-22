@@ -18,10 +18,17 @@
 // SD card
 #define SD_CS    16
 
-// Encoder
-const int ENCODER_PIN_A = 27;
-const int ENCODER_PIN_B = 26;
-const int BUTTON_PIN_SW = 25;
+// 5-way joystick (digital outputs, active LOW)
+// Custom mapping: R = up, F = left, B = right, L = down, M = select
+#define JOY_PIN_F 27
+#define JOY_PIN_B 26
+#define JOY_PIN_L 25
+#define JOY_PIN_R 33
+#define JOY_PIN_M 32
+
+// Input timing
+#define JOY_DEBOUNCE_MS 140
+#define JOY_SELECT_DEBOUNCE_MS 220
 
 // Display rotation 0..3
 #define DISPLAY_ROTATION 0
