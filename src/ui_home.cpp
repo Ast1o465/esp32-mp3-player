@@ -14,8 +14,6 @@ const char* UI::menuName(uint8_t index) const {
 }
 
 void UI::drawInterface() {
-    tft.initR(DISPLAY_INITR_TAB);
-    tft.setRotation(DISPLAY_ROTATION);
     tft.fillScreen(ST77XX_BLACK);
 
     tft.setTextColor(ST77XX_WHITE);
@@ -29,6 +27,13 @@ void UI::drawInterface() {
     tft.setTextColor(ST77XX_CYAN);
     tft.setCursor(14, 55);
     tft.print("AUDIO");
+
+    redrawHomePlaybackInfo();
+}
+
+void UI::redrawHomePlaybackInfo() {
+    tft.fillRect(58, 38, 68, 40, ST77XX_BLACK);
+    tft.fillRect(0, 136, 128, 12, ST77XX_BLACK);
 
     // Song title (show playing file)
     tft.setTextColor(ST77XX_WHITE);
@@ -66,6 +71,7 @@ void UI::drawInterface() {
     tft.print("3:45");
 
     // Bottom control buttons
+    tft.setTextColor(ST77XX_WHITE);
     tft.setCursor(15, 138);
     tft.print("Prev");
     tft.setCursor(55, 138);
@@ -130,33 +136,29 @@ void UI::handleHomeInput(unsigned long now) {
             moveSelection(0, -1);
             lastMoveMs = now;
         } else if (digitalRead(JOY_PIN_B) == LOW) {
-            // Next song
-            if (mediaFileCount > 0) {
-                selectedFileIndex = (selectedFileIndex + 1) % mediaFileCount;
-                currentPlayingFile = mediaFiles[selectedFileIndex];
-                audioPlayer.playFile(currentPlayingFile);
-                isAudioPlaying = true;
-                drawInterface();
-                drawMenuButtons();
-            }
+            moveSelection(0, 1);
             lastMoveMs = now;
         } else if (digitalRead(JOY_PIN_L) == LOW) {
-            // Previous song
-            if (mediaFileCount > 0) {
-                selectedFileIndex = (selectedFileIndex > 0) ? (selectedFileIndex - 1) : (mediaFileCount - 1);
-                currentPlayingFile = mediaFiles[selectedFileIndex];
-                audioPlayer.playFile(currentPlayingFile);
-                isAudioPlaying = true;
-                drawInterface();
-                drawMenuButtons();
-            }
+            moveSelection(1, 0);
             lastMoveMs = now;
         }
     }
 
-    if (now - lastSelectMs > JOY_SELECT_DEBOUNCE_MS && digitalRead(JOY_PIN_M) == LOW) {
+    const bool joyMPressed = digitalRead(JOY_PIN_M) == LOW;
+    if (joyMPressed && !joyMWasPressed && now - lastSelectMs > JOY_SELECT_DEBOUNCE_MS) {
+        if (pendingHomeSelect && (now - lastJoyMClickMs <= JOY_DOUBLECLICK_MS)) {
+            pendingHomeSelect = false;
+            togglePlayPause();
+        } else {
+            pendingHomeSelect = true;
+            lastJoyMClickMs = now;
+        }
         lastSelectMs = now;
+    }
+    joyMWasPressed = joyMPressed;
 
+    if (pendingHomeSelect && (now - lastJoyMClickMs > JOY_DOUBLECLICK_MS)) {
+        pendingHomeSelect = false;
         if (selectedMenuIndex == 0) {
             openFilesScreen();
             return;
@@ -164,6 +166,88 @@ void UI::handleHomeInput(unsigned long now) {
 
         Serial.print("Selected menu: ");
         Serial.println(menuName(selectedMenuIndex));
+    }
+}
+
+void UI::handleTrackButtons(unsigned long now) {
+    const bool prevPressed = digitalRead(BTN_PREV_PIN) == LOW;
+    if (prevPressed && !prevBtnWasPressed && now - lastPrevBtnMs > BTN_DEBOUNCE_MS) {
+        playPreviousTrack();
+        lastPrevBtnMs = now;
+    }
+    prevBtnWasPressed = prevPressed;
+
+    const bool nextPressed = digitalRead(BTN_NEXT_PIN) == LOW;
+    if (nextPressed && !nextBtnWasPressed && now - lastNextBtnMs > BTN_DEBOUNCE_MS) {
+        playNextTrack();
+        lastNextBtnMs = now;
+    }
+    nextBtnWasPressed = nextPressed;
+}
+
+void UI::playNextTrack() {
+    if (mediaFileCount == 0) {
+        loadMediaFilesFromSd();
+    }
+    if (mediaFileCount == 0) {
+        return;
+    }
+
+    selectedFileIndex = (selectedFileIndex + 1) % mediaFileCount;
+    currentPlayingFile = mediaFiles[selectedFileIndex];
+    audioPlayer.playFile(currentPlayingFile);
+    isAudioPlaying = audioPlayer.isPlaying();
+
+    if (currentScreen == Screen::Home) {
+        redrawHomePlaybackInfo();
+    }
+}
+
+void UI::playPreviousTrack() {
+    if (mediaFileCount == 0) {
+        loadMediaFilesFromSd();
+    }
+    if (mediaFileCount == 0) {
+        return;
+    }
+
+    selectedFileIndex = (selectedFileIndex > 0) ? (selectedFileIndex - 1) : (mediaFileCount - 1);
+    currentPlayingFile = mediaFiles[selectedFileIndex];
+    audioPlayer.playFile(currentPlayingFile);
+    isAudioPlaying = audioPlayer.isPlaying();
+
+    if (currentScreen == Screen::Home) {
+        redrawHomePlaybackInfo();
+    }
+}
+
+void UI::togglePlayPause() {
+    if (isAudioPlaying) {
+        audioPlayer.pause();
+        isAudioPlaying = false;
+    } else {
+        if (currentPlayingFile.length() == 0) {
+            if (mediaFileCount == 0) {
+                loadMediaFilesFromSd();
+            }
+            if (mediaFileCount == 0) {
+                return;
+            }
+
+            selectedFileIndex = selectedFileIndex % mediaFileCount;
+            currentPlayingFile = mediaFiles[selectedFileIndex];
+            audioPlayer.playFile(currentPlayingFile);
+        } else {
+            audioPlayer.resume();
+            if (!audioPlayer.isPlaying()) {
+                audioPlayer.playFile(currentPlayingFile);
+            }
+        }
+        isAudioPlaying = audioPlayer.isPlaying();
+    }
+
+    if (currentScreen == Screen::Home) {
+        redrawHomePlaybackInfo();
     }
 }
 

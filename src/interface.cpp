@@ -15,6 +15,8 @@ void UI::begin() {
     pinMode(JOY_PIN_L, INPUT_PULLUP);
     pinMode(JOY_PIN_R, INPUT_PULLUP);
     pinMode(JOY_PIN_M, INPUT_PULLUP);
+    pinMode(BTN_PREV_PIN, INPUT_PULLUP);
+    pinMode(BTN_NEXT_PIN, INPUT_PULLUP);
 
     sdReady = SD.begin(SD_CS);
     if (!sdReady) {
@@ -23,12 +25,16 @@ void UI::begin() {
         Serial.println("SD init OK");
     }
 
+    tft.initR(DISPLAY_INITR_TAB);
+    tft.setRotation(DISPLAY_ROTATION);
+
     drawInterface();
     drawMenuButtons();
 }
 
 void UI::update() {
     const unsigned long now = millis();
+    handleTrackButtons(now);
 
     if (currentScreen == Screen::Home) {
         handleHomeInput(now);

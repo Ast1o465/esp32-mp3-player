@@ -29,6 +29,13 @@
 // Input timing
 #define JOY_DEBOUNCE_MS 140
 #define JOY_SELECT_DEBOUNCE_MS 220
+#define JOY_DOUBLECLICK_MS 320
+
+// Extra track buttons (active LOW)
+// Avoid SPI default pins (18/19/23) to prevent false trigger while SD/TFT is active.
+#define BTN_PREV_PIN 13
+#define BTN_NEXT_PIN 14
+#define BTN_DEBOUNCE_MS 220
 
 // Audio I2S (PCM5102A)
 #define I2S_BCLK_PIN 22

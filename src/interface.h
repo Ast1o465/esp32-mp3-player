@@ -33,8 +33,16 @@ private:
 
 	unsigned long lastMoveMs = 0;
 	unsigned long lastSelectMs = 0;
+	unsigned long lastPrevBtnMs = 0;
+	unsigned long lastNextBtnMs = 0;
+	unsigned long lastJoyMClickMs = 0;
+	bool pendingHomeSelect = false;
+	bool joyMWasPressed = false;
+	bool prevBtnWasPressed = false;
+	bool nextBtnWasPressed = false;
 
 	void drawInterface();
+	void redrawHomePlaybackInfo();
 	void drawMenuButtons();
 	void drawMenuButton(uint8_t index, bool selected);
 	void moveSelection(int8_t dRow, int8_t dCol);
@@ -42,6 +50,10 @@ private:
 
 	void handleHomeInput(unsigned long now);
 	void handleFilesInput(unsigned long now);
+	void handleTrackButtons(unsigned long now);
+	void playNextTrack();
+	void playPreviousTrack();
+	void togglePlayPause();
 	void openFilesScreen();
 	void returnToHomeScreen();
 
