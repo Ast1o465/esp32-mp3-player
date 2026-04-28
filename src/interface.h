@@ -37,7 +37,9 @@ private:
 	unsigned long lastNextBtnMs = 0;
 	unsigned long lastJoyMClickMs = 0;
 	unsigned long lastProgressUpdateMs = 0;
+	unsigned long lastTitleScrollMs = 0;
 	uint32_t lastDisplayedTime = 0;
+	int titleScrollOffset = 0;
 	bool pendingHomeSelect = false;
 	bool joyMWasPressed = false;
 	bool prevBtnWasPressed = false;
@@ -46,6 +48,7 @@ private:
 	void drawInterface();
 	void redrawHomePlaybackInfo();
 	void updateProgressBar();
+	void updateTitleScroll();
 	void drawMenuButtons();
 	void drawMenuButton(uint8_t index, bool selected);
 	void moveSelection(int8_t dRow, int8_t dCol);

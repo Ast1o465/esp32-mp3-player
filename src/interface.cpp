@@ -44,6 +44,12 @@ void UI::update() {
             lastProgressUpdateMs = now;
             updateProgressBar();
         }
+
+        // Update scrolling title every 300ms
+        if (now - lastTitleScrollMs >= 300) {
+            lastTitleScrollMs = now;
+            updateTitleScroll();
+        }
     } else {
         handleFilesInput(now);
     }

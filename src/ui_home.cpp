@@ -35,18 +35,6 @@ void UI::redrawHomePlaybackInfo() {
     tft.fillRect(58, 38, 68, 40, ST77XX_BLACK);
     tft.fillRect(0, 136, 128, 12, ST77XX_BLACK);
 
-    // Song title (show playing file)
-    tft.setTextColor(ST77XX_WHITE);
-    tft.setCursor(58, 38);
-    String displayTitle = currentPlayingFile;
-    if (displayTitle.length() > 18) {
-        displayTitle = displayTitle.substring(0, 15) + "...";
-    }
-    if (displayTitle.length() == 0) {
-        displayTitle = "No Song";
-    }
-    tft.print(displayTitle);
-
     // Status
     tft.setCursor(58, 50);
     if (isAudioPlaying) {
@@ -71,7 +59,41 @@ void UI::redrawHomePlaybackInfo() {
     tft.print("Next");
 
     lastDisplayedTime = 0;
+    titleScrollOffset = 0;
+    updateTitleScroll();
     updateProgressBar();
+}
+
+void UI::updateTitleScroll() {
+    String displayTitle = currentPlayingFile;
+    if (displayTitle.length() == 0) {
+        displayTitle = "No Song";
+    }
+
+    // Clear title area
+    tft.fillRect(58, 38, 68, 8, ST77XX_BLACK);
+    tft.setTextColor(ST77XX_WHITE);
+    tft.setCursor(58, 38);
+
+    // If title fits, just display it
+    if (displayTitle.length() <= 11) {
+        tft.print(displayTitle);
+        titleScrollOffset = 0;
+        return;
+    }
+
+    // Scrolling effect for long titles
+    String scrollText = displayTitle + "   ";
+    int textLen = scrollText.length();
+
+    String visiblePart = "";
+    for (int i = 0; i < 11 && i < textLen; i++) {
+        int charIndex = (titleScrollOffset + i) % textLen;
+        visiblePart += scrollText.charAt(charIndex);
+    }
+
+    tft.print(visiblePart);
+    titleScrollOffset = (titleScrollOffset + 1) % textLen;
 }
 
 void UI::updateProgressBar() {
