@@ -13,48 +13,39 @@ void UI::openFilesScreen() {
 }
 
 void UI::handleFilesInput(unsigned long now) {
+    if (mediaFileCount == 0) return;
+
     if (now - lastMoveMs > JOY_DEBOUNCE_MS) {
-        if (mediaFileCount > 0 && digitalRead(JOY_PIN_R) == LOW) {
-            if (selectedFileIndex > 0) {
-                selectedFileIndex--;
-                if (selectedFileIndex < filesScrollOffset) {
-                    filesScrollOffset = selectedFileIndex;
-                }
-                drawFilesList();
-            }
-            lastMoveMs = now;
-        } else if (mediaFileCount > 0 && digitalRead(JOY_PIN_L) == LOW) {
-            if (selectedFileIndex + 1 < mediaFileCount) {
-                selectedFileIndex++;
-                if (selectedFileIndex >= filesScrollOffset + kVisibleFileRows) {
-                    filesScrollOffset = selectedFileIndex - kVisibleFileRows + 1;
-                }
-                drawFilesList();
-            }
-            lastMoveMs = now;
-        } else if (mediaFileCount > 0 && digitalRead(JOY_PIN_F) == LOW) {
-            if (selectedFileIndex > 0) {
-                if (selectedFileIndex > kVisibleFileRows) {
-                    selectedFileIndex -= kVisibleFileRows;
-                } else {
-                    selectedFileIndex = 0;
-                }
-                if (selectedFileIndex < filesScrollOffset) {
-                    filesScrollOffset = selectedFileIndex;
-                }
-                drawFilesList();
-            }
-            lastMoveMs = now;
-        } else if (mediaFileCount > 0 && digitalRead(JOY_PIN_B) == LOW) {
-            if (selectedFileIndex + 1 < mediaFileCount) {
-                uint8_t newIndex = selectedFileIndex + kVisibleFileRows;
-                if (newIndex >= mediaFileCount) {
-                    newIndex = mediaFileCount - 1;
-                }
+        int8_t delta = 0;
+        bool pageMove = false;
+
+        if (digitalRead(JOY_PIN_R) == LOW) {
+            delta = -1;
+        } else if (digitalRead(JOY_PIN_L) == LOW) {
+            delta = 1;
+        } else if (digitalRead(JOY_PIN_F) == LOW) {
+            delta = -kVisibleFileRows;
+            pageMove = true;
+        } else if (digitalRead(JOY_PIN_B) == LOW) {
+            delta = kVisibleFileRows;
+            pageMove = true;
+        }
+
+        if (delta != 0) {
+            int newIndex = selectedFileIndex + delta;
+            if (newIndex < 0) newIndex = 0;
+            if (newIndex >= mediaFileCount) newIndex = mediaFileCount - 1;
+
+            if (newIndex != selectedFileIndex) {
                 selectedFileIndex = newIndex;
-                if (selectedFileIndex >= filesScrollOffset + kVisibleFileRows) {
+
+                // Adjust scroll offset
+                if (selectedFileIndex < filesScrollOffset) {
+                    filesScrollOffset = selectedFileIndex;
+                } else if (selectedFileIndex >= filesScrollOffset + kVisibleFileRows) {
                     filesScrollOffset = selectedFileIndex - kVisibleFileRows + 1;
                 }
+
                 drawFilesList();
             }
             lastMoveMs = now;
@@ -109,9 +100,15 @@ void UI::scanDirectory(File dir, const String& prefix) {
 }
 
 bool UI::isMediaFile(const String& fileName) const {
-    String lowerName = fileName;
-    lowerName.toLowerCase();
-    return lowerName.endsWith(".mp3") || lowerName.endsWith(".mp4") || lowerName.endsWith(".wav");
+    const int len = fileName.length();
+    if (len < 4) return false;
+
+    const char* name = fileName.c_str();
+    const char* ext = name + len - 4;
+
+    return (strcasecmp(ext, ".mp3") == 0 ||
+            strcasecmp(ext, ".mp4") == 0 ||
+            strcasecmp(ext, ".wav") == 0);
 }
 
 void UI::drawFilesScreen() {
@@ -146,12 +143,11 @@ void UI::drawFilesList() {
 
     for (uint8_t row = 0; row < kVisibleFileRows; row++) {
         const uint8_t fileIndex = filesScrollOffset + row;
-        if (fileIndex >= mediaFileCount) {
-            break;
-        }
+        if (fileIndex >= mediaFileCount) break;
 
-        const bool selected = fileIndex == selectedFileIndex;
+        const bool selected = (fileIndex == selectedFileIndex);
         const int y = kFilesListStartY + row * kFileRowHeight;
+
         if (selected) {
             tft.fillRect(2, y, 124, kFileRowHeight - 1, ST77XX_YELLOW);
             tft.setTextColor(ST77XX_BLACK, ST77XX_YELLOW);
@@ -160,7 +156,15 @@ void UI::drawFilesList() {
         }
 
         tft.setCursor(6, y + 4);
-        tft.print(shortenFileName(mediaFiles[fileIndex], 20));
+        const String& fileName = mediaFiles[fileIndex];
+        if (fileName.length() <= 20) {
+            tft.print(fileName);
+        } else {
+            for (uint8_t i = 0; i < 17; i++) {
+                tft.write(fileName[i]);
+            }
+            tft.print("...");
+        }
     }
 }
 
@@ -168,10 +172,5 @@ String UI::shortenFileName(const String& fileName, uint8_t maxChars) const {
     if (fileName.length() <= maxChars) {
         return fileName;
     }
-
-    if (maxChars < 4) {
-        return fileName.substring(0, maxChars);
-    }
-
     return fileName.substring(0, maxChars - 3) + "...";
 }

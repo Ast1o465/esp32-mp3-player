@@ -65,9 +65,12 @@ void UI::redrawHomePlaybackInfo() {
 }
 
 void UI::updateTitleScroll() {
-    String displayTitle = currentPlayingFile;
-    if (displayTitle.length() == 0) {
+    const char* displayTitle = currentPlayingFile.c_str();
+    int titleLen = currentPlayingFile.length();
+
+    if (titleLen == 0) {
         displayTitle = "No Song";
+        titleLen = 7;
     }
 
     // Clear title area
@@ -76,29 +79,29 @@ void UI::updateTitleScroll() {
     tft.setCursor(58, 38);
 
     // If title fits, just display it
-    if (displayTitle.length() <= 11) {
+    if (titleLen <= 11) {
         tft.print(displayTitle);
         titleScrollOffset = 0;
         return;
     }
 
     // Scrolling effect for long titles
-    String scrollText = displayTitle + "   ";
-    int textLen = scrollText.length();
-
-    String visiblePart = "";
-    for (int i = 0; i < 11 && i < textLen; i++) {
-        int charIndex = (titleScrollOffset + i) % textLen;
-        visiblePart += scrollText.charAt(charIndex);
+    const int scrollLen = titleLen + 3;
+    for (int i = 0; i < 11 && i < scrollLen; i++) {
+        int charIndex = (titleScrollOffset + i) % scrollLen;
+        if (charIndex < titleLen) {
+            tft.write(displayTitle[charIndex]);
+        } else {
+            tft.write(' ');
+        }
     }
 
-    tft.print(visiblePart);
-    titleScrollOffset = (titleScrollOffset + 1) % textLen;
+    titleScrollOffset = (titleScrollOffset + 1) % scrollLen;
 }
 
 void UI::updateProgressBar() {
-    uint32_t currentTime = audioPlayer.getCurrentTime();
-    uint32_t duration = audioPlayer.getDuration();
+    const uint32_t currentTime = audioPlayer.getCurrentTime();
+    const uint32_t duration = audioPlayer.getDuration();
 
     // Only update if time changed
     if (currentTime == lastDisplayedTime && duration > 0) {
@@ -110,32 +113,33 @@ void UI::updateProgressBar() {
     tft.fillRect(59, 64, 58, 3, ST77XX_BLACK);
 
     // Draw progress
-    if (isAudioPlaying && duration > 0) {
-        int progressWidth = (currentTime * 58) / duration;
-        if (progressWidth > 58) progressWidth = 58;
-        if (progressWidth > 0) {
+    if (duration > 0) {
+        const int progressWidth = (currentTime * 58) / duration;
+        if (progressWidth > 0 && progressWidth <= 58) {
             tft.fillRect(59, 64, progressWidth, 3, ST77XX_WHITE);
         }
     }
 
     // Clear and update time display
     tft.fillRect(58, 72, 68, 8, ST77XX_BLACK);
-
     tft.setTextColor(ST77XX_WHITE);
+
+    // Current time
     tft.setCursor(58, 72);
-    int currentMin = currentTime / 60;
-    int currentSec = currentTime % 60;
+    const int currentMin = currentTime / 60;
+    const int currentSec = currentTime % 60;
     tft.print(currentMin);
-    tft.print(":");
-    if (currentSec < 10) tft.print("0");
+    tft.print(':');
+    if (currentSec < 10) tft.print('0');
     tft.print(currentSec);
 
+    // Duration
     tft.setCursor(100, 72);
-    int durationMin = duration / 60;
-    int durationSec = duration % 60;
+    const int durationMin = duration / 60;
+    const int durationSec = duration % 60;
     tft.print(durationMin);
-    tft.print(":");
-    if (durationSec < 10) tft.print("0");
+    tft.print(':');
+    if (durationSec < 10) tft.print('0');
     tft.print(durationSec);
 }
 
@@ -247,15 +251,13 @@ void UI::handleTrackButtons(unsigned long now) {
 void UI::playNextTrack() {
     if (mediaFileCount == 0) {
         loadMediaFilesFromSd();
-    }
-    if (mediaFileCount == 0) {
-        return;
+        if (mediaFileCount == 0) return;
     }
 
     selectedFileIndex = (selectedFileIndex + 1) % mediaFileCount;
     currentPlayingFile = mediaFiles[selectedFileIndex];
     audioPlayer.playFile(currentPlayingFile);
-    isAudioPlaying = audioPlayer.isPlaying();
+    isAudioPlaying = true;
 
     if (currentScreen == Screen::Home) {
         redrawHomePlaybackInfo();
@@ -265,15 +267,13 @@ void UI::playNextTrack() {
 void UI::playPreviousTrack() {
     if (mediaFileCount == 0) {
         loadMediaFilesFromSd();
-    }
-    if (mediaFileCount == 0) {
-        return;
+        if (mediaFileCount == 0) return;
     }
 
     selectedFileIndex = (selectedFileIndex > 0) ? (selectedFileIndex - 1) : (mediaFileCount - 1);
     currentPlayingFile = mediaFiles[selectedFileIndex];
     audioPlayer.playFile(currentPlayingFile);
-    isAudioPlaying = audioPlayer.isPlaying();
+    isAudioPlaying = true;
 
     if (currentScreen == Screen::Home) {
         redrawHomePlaybackInfo();
