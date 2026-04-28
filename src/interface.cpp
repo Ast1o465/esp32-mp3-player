@@ -38,6 +38,12 @@ void UI::update() {
 
     if (currentScreen == Screen::Home) {
         handleHomeInput(now);
+
+        // Update progress bar every 500ms when playing
+        if (isAudioPlaying && now - lastProgressUpdateMs >= 500) {
+            lastProgressUpdateMs = now;
+            updateProgressBar();
+        }
     } else {
         handleFilesInput(now);
     }

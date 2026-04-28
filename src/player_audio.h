@@ -12,6 +12,8 @@ public:
     void resume();
     bool isPlaying() const;
     const String& getCurrentFile() const;
+    uint32_t getCurrentTime() const;
+    uint32_t getDuration() const;
     
 private:
     String currentFile;

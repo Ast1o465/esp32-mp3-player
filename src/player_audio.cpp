@@ -112,6 +112,14 @@ const String& AudioPlayer::getCurrentFile() const {
     return currentFile;
 }
 
+uint32_t AudioPlayer::getCurrentTime() const {
+    return decoder.getAudioCurrentTime();
+}
+
+uint32_t AudioPlayer::getDuration() const {
+    return decoder.getAudioFileDuration();
+}
+
 void audioUpdate() {
     AudioCommand cmd = AudioCommand::None;
     String cmdFile;

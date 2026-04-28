@@ -57,18 +57,9 @@ void UI::redrawHomePlaybackInfo() {
         tft.print("Stopped");
     }
 
-    // Progress bar
+    // Progress bar frame
     tft.setTextColor(ST77XX_WHITE);
     tft.drawRect(58, 63, 60, 5, ST77XX_WHITE);
-    if (isAudioPlaying) {
-        tft.fillRect(58, 63, 30, 5, ST77XX_WHITE);
-    }
-
-    // Timers
-    tft.setCursor(58, 72);
-    tft.print("0:24");
-    tft.setCursor(100, 72);
-    tft.print("3:45");
 
     // Bottom control buttons
     tft.setTextColor(ST77XX_WHITE);
@@ -78,6 +69,52 @@ void UI::redrawHomePlaybackInfo() {
     isAudioPlaying ? tft.print("Pause") : tft.print("Play");
     tft.setCursor(100, 138);
     tft.print("Next");
+
+    lastDisplayedTime = 0;
+    updateProgressBar();
+}
+
+void UI::updateProgressBar() {
+    uint32_t currentTime = audioPlayer.getCurrentTime();
+    uint32_t duration = audioPlayer.getDuration();
+
+    // Only update if time changed
+    if (currentTime == lastDisplayedTime && duration > 0) {
+        return;
+    }
+    lastDisplayedTime = currentTime;
+
+    // Clear progress bar area (inside the frame)
+    tft.fillRect(59, 64, 58, 3, ST77XX_BLACK);
+
+    // Draw progress
+    if (isAudioPlaying && duration > 0) {
+        int progressWidth = (currentTime * 58) / duration;
+        if (progressWidth > 58) progressWidth = 58;
+        if (progressWidth > 0) {
+            tft.fillRect(59, 64, progressWidth, 3, ST77XX_WHITE);
+        }
+    }
+
+    // Clear and update time display
+    tft.fillRect(58, 72, 68, 8, ST77XX_BLACK);
+
+    tft.setTextColor(ST77XX_WHITE);
+    tft.setCursor(58, 72);
+    int currentMin = currentTime / 60;
+    int currentSec = currentTime % 60;
+    tft.print(currentMin);
+    tft.print(":");
+    if (currentSec < 10) tft.print("0");
+    tft.print(currentSec);
+
+    tft.setCursor(100, 72);
+    int durationMin = duration / 60;
+    int durationSec = duration % 60;
+    tft.print(durationMin);
+    tft.print(":");
+    if (durationSec < 10) tft.print("0");
+    tft.print(durationSec);
 }
 
 void UI::drawMenuButton(uint8_t index, bool selected) {
