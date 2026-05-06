@@ -28,8 +28,7 @@ void UI::begin() {
     tft.initR(DISPLAY_INITR_TAB);
     tft.setRotation(DISPLAY_ROTATION);
 
-    drawInterface();
-    drawMenuButtons();
+    returnToHomeScreen();
 }
 
 void UI::update() {

@@ -1,4 +1,5 @@
 #include "interface.h"
+#include "player_audio.h"
 
 namespace {
 const uint8_t kVisibleFileRows = 6;
@@ -54,6 +55,9 @@ void UI::handleFilesInput(unsigned long now) {
 
     if (now - lastSelectMs > JOY_SELECT_DEBOUNCE_MS && digitalRead(JOY_PIN_M) == LOW) {
         lastSelectMs = now;
+        currentPlayingFile = mediaFiles[selectedFileIndex];
+        audioPlayer.playFile(currentPlayingFile);
+        isAudioPlaying = true;
         returnToHomeScreen();
     }
 }
@@ -157,14 +161,7 @@ void UI::drawFilesList() {
 
         tft.setCursor(6, y + 4);
         const String& fileName = mediaFiles[fileIndex];
-        if (fileName.length() <= 20) {
-            tft.print(fileName);
-        } else {
-            for (uint8_t i = 0; i < 17; i++) {
-                tft.write(fileName[i]);
-            }
-            tft.print("...");
-        }
+        tft.print(shortenFileName(fileName, 20));
     }
 }
 

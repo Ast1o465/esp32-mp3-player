@@ -298,11 +298,8 @@ void UI::togglePlayPause() {
             audioPlayer.playFile(currentPlayingFile);
         } else {
             audioPlayer.resume();
-            if (!audioPlayer.isPlaying()) {
-                audioPlayer.playFile(currentPlayingFile);
-            }
         }
-        isAudioPlaying = audioPlayer.isPlaying();
+        isAudioPlaying = true;
     }
 
     if (currentScreen == Screen::Home) {
